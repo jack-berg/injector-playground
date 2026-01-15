@@ -30,7 +30,7 @@ sdk install java 17.0.17-tem
 sdk install maven
 ```
 
-verify:
+* Verify:
 
 ```shell
 jberg@berg-home:~/code/injector-playground$ java -version
@@ -80,10 +80,7 @@ export JAVA_TOOL_OPTIONS="-javaagent:$(pwd)/target/javaagent/opentelemetry-javaa
 && export OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
 ```
 
-* Open the app in the browser:
-
-* http://localhost:8080
-* http://localhost:9990/management (credentials: TODO)
+* Open the app in the browser: [http://localhost:8080](http://localhost:8080])
 
 * Generate simple load:
 
