@@ -99,6 +99,61 @@ OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader clas
 
 If everything worked, should eventually see a service with name `JBoss Modules` in grafana.
 
+## Running on Red Hat UBI 8 (Docker)
+
+To follow these instructions on RHEL without a dedicated RHEL box, use the [Red Hat Universal Base Image 8.10](https://catalog.redhat.com/en/software/containers/ubi8/ubi/5c359854d70cc534b3a3784e) via Docker.
+
+### Start the container
+
+Mount the repo and expose the WildFly port:
+
+```shell
+docker run -it --rm \
+  -v $(pwd):/workspace \
+  -w /workspace \
+  -p 8080:8080 \
+  registry.access.redhat.com/ubi8/ubi:8.10 \
+  /bin/bash
+```
+
+### Install Java and Maven via sdkman
+
+```shell
+# sdkman requires zip / unzip
+dnf install -y zip unzip
+
+# install sdkman
+curl -s "https://get.sdkman.io" | bash
+source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+# install java and maven
+sdk install java 17.0.17-tem
+sdk install maven
+```
+
+### Build the WildFly app
+
+```shell
+cd wildfly-app && mvn package verify && cd ..
+```
+
+### Install the injector
+
+Download the `.rpm` package. Note: RPM packages use `x86_64` where `.deb` packages use `amd64` — check the [releases page](https://github.com/open-telemetry/opentelemetry-injector/releases/tag/v0.5.0) for the exact filename:
+
+```shell
+mkdir -p out
+curl -fL -o ./out/opentelemetry-injector-0.5.0-1.aarch64.rpm https://github.com/open-telemetry/opentelemetry-injector/releases/download/v0.5.0/opentelemetry-injector-0.5.0-1.aarch64.rpm 
+```
+
+Install with `dnf` (equivalent of `apt install` above):
+
+```shell
+dnf install -y ./out/opentelemetry-injector-0.5.0-1.aarch64.rpm
+```
+
+From here, follow the same steps above to configure `/etc/opentelemetry/default_auto_instrumentation_env.conf`, add `libotelinject.so` to `/etc/ld.so.preload`, and run the WildFly app per [wildfly-app/README.md](wildfly-app/README.md). Skip the Java/Maven setup steps in that README since they're covered above.
+
 ## Injector upgrade
 
 * Download new injector
