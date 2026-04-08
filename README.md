@@ -8,16 +8,17 @@ We'll be configuring the injector to export data via OTLP to grafana cloud.
 
 ## Injector installation
 
-* Download latest injector (currently [v0.0.3](https://github.com/open-telemetry/opentelemetry-injector/releases/tag/v0.0.3)). Replace the link in the command below with the appropriate deb / rpm package based on preferred package manager system arch. In my case, I use a `deb` package and my system arch is `amd64`.   
+* Download latest injector (currently [v0.5.0](https://github.com/open-telemetry/opentelemetry-injector/releases/tag/v0.5.0)). Replace the link in the command below with the appropriate deb / rpm package based on preferred package manager system arch. In my case, I use a `deb` package and my system arch is `amd64`.   
 
 ```shell
-curl -L -O --output-dir ./out https://github.com/open-telemetry/opentelemetry-injector/releases/download/v0.0.3/opentelemetry-injector_0.0.3_amd64.deb
+curl -L -O --output-dir ./out https://github.com/open-telemetry/opentelemetry-injector/releases/download/v0.5.0/opentelemetry-injector_0.5.0_amd64.deb
+chmod 644 out/opentelemetry-injector_0.5.0_amd64.deb
 ```
 
 * Install injector
 
 ```shell
-sudo apt install ./out/opentelemetry-injector_0.0.3_amd64.deb
+sudo apt install ./out/opentelemetry-injector_0.5.0_amd64.deb
 ```
 
 (to uninstall)
@@ -31,17 +32,16 @@ sudo apt remove opentelemetry-injector
 ```shell
 # main program and agents in /usr/lib/opentelemetry
 jberg@berg-home:~/code/injector-playground$ ls -lh /usr/lib/opentelemetry
-total 25M
 drwxr-xr-x 4 root root 4.0K Nov 25 21:01 dotnet
--rwxr-xr-x 1 root root  22M Dec 16 11:43 javaagent.jar
-drwxr-xr-x 3 root root 4.0K Dec 17 20:47 js
--rwxr-xr-x 1 root root 2.5M Dec 16 11:43 libotelinject.so
+drwxr-xr-x 2 root root 4.0K Apr  8 18:02 jvm
+-rwxr-xr-x 1 root root 2.7M Apr  7 15:59 libotelinject.so
+drwxr-xr-x 3 root root 4.0K Apr  8 18:02 nodejs
 
 # other config resources in /etc/opentelemetry
 jberg@berg-home:~/code/injector-playground$ ls -lh /etc/opentelemetry/
-total 8.0K
--rwxr-xr-x 1 root root   0 Dec 16 11:44 default_auto_instrumentation_env.conf
--rwxr-xr-x 1 root root 465 Dec 16 11:44 otelinject.conf
+total 12K
+-rw-r--r-- 1 root root 363 Dec 17 22:42 default_auto_instrumentation_env.conf
+-rwxr-xr-x 1 root root 473 Apr  7 16:00 otelinject.conf
 ```
 
 * Configure global environment variables to export to grafana via OTLP:
