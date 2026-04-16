@@ -8,17 +8,17 @@ We'll be configuring the injector to export data via OTLP to grafana cloud.
 
 ## Injector installation
 
-* Download latest injector (currently [v0.5.0](https://github.com/open-telemetry/opentelemetry-injector/releases/tag/v0.5.0)). Replace the link in the command below with the appropriate deb / rpm package based on preferred package manager system arch. In my case, I use a `deb` package and my system arch is `amd64`.   
+* Download latest injector (currently [v0.7.0](https://github.com/open-telemetry/opentelemetry-injector/releases/tag/v0.7.0)). Replace the link in the command below with the appropriate deb / rpm package based on preferred package manager system arch. In my case, I use a `deb` package and my system arch is `amd64`.   
 
 ```shell
-curl -L -O --output-dir ./out https://github.com/open-telemetry/opentelemetry-injector/releases/download/v0.5.0/opentelemetry-injector_0.5.0_amd64.deb
-chmod 644 out/opentelemetry-injector_0.5.0_amd64.deb
+curl -L -O --output-dir ./out https://github.com/open-telemetry/opentelemetry-injector/releases/download/v0.7.0/opentelemetry-injector_0.7.0_amd64.deb
+chmod 644 out/opentelemetry-injector_0.7.0_amd64.deb
 ```
 
 * Install injector
 
 ```shell
-sudo apt install ./out/opentelemetry-injector_0.5.0_amd64.deb
+sudo apt install ./out/opentelemetry-injector_0.7.0_amd64.deb
 ```
 
 (to uninstall)
@@ -27,7 +27,7 @@ sudo apt install ./out/opentelemetry-injector_0.5.0_amd64.deb
 sudo apt remove opentelemetry-injector
 ```
 
-* Notice the resources it installs in `/usr/lib/opentelemetry` and `/etc/opentelemetry`:
+* Notice the resources it installs in `/usr/lib/opentelemetry` and `/etc/opentelemetry/injector`:
 
 ```shell
 # main program and agents in /usr/lib/opentelemetry
@@ -38,18 +38,19 @@ drwxr-xr-x 2 root root 4.0K Apr  8 18:02 jvm
 drwxr-xr-x 3 root root 4.0K Apr  8 18:02 nodejs
 
 # other config resources in /etc/opentelemetry
-jberg@berg-home:~/code/injector-playground$ ls -lh /etc/opentelemetry/
-total 12K
--rw-r--r-- 1 root root 363 Dec 17 22:42 default_auto_instrumentation_env.conf
--rwxr-xr-x 1 root root 473 Apr  7 16:00 otelinject.conf
+jberg@berg-home:~/code/injector-playground$ ls -lh /etc/opentelemetry/injector
+total 8.0K
+drwxr-xr-x 2 root root 4.0K Apr 16 13:55 conf.d
+-rwxr-xr-x 1 root root    0 Apr 16 10:26 default_env.conf
+-rwxr-xr-x 1 root root  232 Apr 16 10:26 injector.conf
 ```
 
 * Configure global environment variables to export to grafana via OTLP:
 
-Open `/etc/opentelemetry/default_auto_instrumentation_env.conf`:
+Open `/etc/opentelemetry/injector/default_env.conf`:
 
 ```shell
-sudo vim /etc/opentelemetry/default_auto_instrumentation_env.conf
+sudo vim /etc/opentelemetry/injector/default_env.conf
 ```
 
 Add the following content:
@@ -111,7 +112,7 @@ Mount the repo and expose the WildFly port:
 docker run -it --rm \
   -v $(pwd):/workspace \
   -w /workspace \
-  -p 8080:8080 \
+  -p 8081:8080 \
   registry.access.redhat.com/ubi8/ubi:8.10 \
   /bin/bash
 ```
@@ -134,23 +135,41 @@ sdk install maven
 ### Build the WildFly app
 
 ```shell
-cd wildfly-app && mvn package verify && cd ..
+cd wildfly-app
+mvn package verify
 ```
 
 ### Install the injector
 
-Download the `.rpm` package. Note: RPM packages use `x86_64` where `.deb` packages use `amd64` — check the [releases page](https://github.com/open-telemetry/opentelemetry-injector/releases/tag/v0.5.0) for the exact filename:
+Download the `.rpm` package. Note: RPM packages use `x86_64` where `.deb` packages use `amd64` — check the [releases page](https://github.com/open-telemetry/opentelemetry-injector/releases/tag/v0.7.0) for the exact filename:
 
 ```shell
 mkdir -p out
-curl -fL -o ./out/opentelemetry-injector-0.5.0-1.aarch64.rpm https://github.com/open-telemetry/opentelemetry-injector/releases/download/v0.5.0/opentelemetry-injector-0.5.0-1.aarch64.rpm 
+curl -fL -o ./out/opentelemetry-injector-0.7.0-1.aarch64.rpm https://github.com/open-telemetry/opentelemetry-injector/releases/download/v0.7.0/opentelemetry-injector-0.7.0-1.aarch64.rpm 
 ```
 
 Install with `dnf` (equivalent of `apt install` above):
 
 ```shell
-dnf install -y ./out/opentelemetry-injector-0.5.0-1.aarch64.rpm
+dnf install -y ./out/opentelemetry-injector-0.7.0-1.aarch64.rpm
 ```
+
+### Configure process section
+
+Add config parameters to select only java processes, rather than every process:
+
+```
+vi /etc/opentelemetry/injector/injector.conf
+```
+
+Add the following content:
+
+```txt
+include_paths=*/bin/java
+
+```
+
+### Follow existing instructions
 
 From here, follow the same steps above to configure `/etc/opentelemetry/default_auto_instrumentation_env.conf`, add `libotelinject.so` to `/etc/ld.so.preload`, and run the WildFly app per [wildfly-app/README.md](wildfly-app/README.md). Skip the Java/Maven setup steps in that README since they're covered above.
 
@@ -171,10 +190,10 @@ sudo chmod 755 ./out/opentelemetry-injector_0.0.3_amd64.deb
 sudo apt install ./out/opentelemetry-injector_0.0.3_amd64.deb
 ```
 
-* When prompted to handle change in `/etc/opentelemetry/otelinject.conf`, make a decision based on your situation:
+* When prompted to handle change in `/etc/opentelemetry/injector/injector.conf`, make a decision based on your situation:
 
 ```shell
-Configuration file '/etc/opentelemetry/otelinject.conf'
+Configuration file '/etc/opentelemetry/injector/injector.conf'
  ==> Modified (by you or by a script) since installation.
  ==> Package distributor has shipped an updated version.
    What would you like to do about it ?  Your options are:
