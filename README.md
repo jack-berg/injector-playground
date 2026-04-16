@@ -165,7 +165,7 @@ vi /etc/opentelemetry/injector/injector.conf
 Add the following content:
 
 ```txt
-include_paths=*/bin/java
+include_paths=*/java
 
 ```
 
